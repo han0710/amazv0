@@ -1,15 +1,12 @@
 import pymysql
 import redis
-from scrapy_redis.connection import get_redis_from_settings
 
 import amaz_redis.settings as S
 
-URL_PROD_KWORD={S.REGIONS['GB']:"https://www.amazon.com/s/ref=nb_sb_noss2?url=search-alias=aps&field-keywords=%s",
-                            S.REGIONS['JP']:"https://www.amazon.co.jp/s/ref=nb_sb_noss2?__mk_ja_JP=カタカナ&url=search-alias=aps&field-keywords=%s"}
 SQL_SELECT_KID="SELECT ID FROM KWORD"
 
 def mysql2redis():
-	r=get_redis_from_settings(S)
+	r=redis.StrictRedis(host=S.REDIS_HOST,port=S.REDIS_PORT,password=S.REDIS_PASS)
 	
 	conn=pymysql.connect(S.MYSQL_HOST,S.MYSQL_USER,S.MYSQL_PASSWORD,S.MYSQL_DB,charset=S.MYSQL_CHARSET)
 	cur=conn.cursor()

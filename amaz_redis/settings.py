@@ -8,7 +8,6 @@ MYSQL_USER='root'
 MYSQL_PASSWORD='han0710'
 MYSQL_DB='test'
 MYSQL_CHARSET='utf8'
-
 REGIONS={'GB':'amazon.com','JP':'amazon.co.jp'}
 
 # Scrapy-redis settings
@@ -16,11 +15,13 @@ DUPEFILTER_CLASS="scrapy_redis.dupefilter.RFPDupeFilter"
 SCHEDULER="scrapy_redis.scheduler.Scheduler"
 SCHEDULER_PERSIST=True
 REDIS_PARAMS={
-	'host':'120.77.87.3',
-	'port':'6379',
-	'password':'Password123',
+    'host':'120.77.87.3',
+    'port':'6379',
+    'password':'Password123',
 }
-
+REDIS_HOST=REDIS_PARAMS['host']
+REDIS_PORT=REDIS_PARAMS['port']
+REDIS_PASS=REDIS_PARAMS['password']
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
 #
@@ -93,7 +94,7 @@ SPIDER_MIDDLEWARES = {
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-	'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'amaz_redis.middlewares.RandomUserAgentMiddleware': 500,
 }
 
@@ -107,7 +108,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     #'amaz_redis.pipelines.RedisPipeline': 300,
-	'amaz_redis.pipelines.MySQLPipeline':300,
+    'amaz_redis.pipelines.MySQLPipeline':300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
