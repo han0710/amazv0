@@ -83,13 +83,12 @@ DEFAULT_REQUEST_HEADERS = {
     "Connection":"keep-alive",
     "Upgrade-Insecure-Requests":1,
     "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
-}
-
+} 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-SPIDER_MIDDLEWARES = {
-    'amaz_redis.middlewares.AmazRedisSpiderMiddleware': 543,
-}
+#SPIDER_MIDDLEWARES = {
+#    'amaz_redis.middlewares.AmazRedisSpiderMiddleware': 543,
+#}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html

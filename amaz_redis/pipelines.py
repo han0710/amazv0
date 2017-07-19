@@ -11,7 +11,7 @@ import pymysql
 
 from scrapy.exceptions import DropItem
 
-from amaz_redis.items import Product,Keyword,Prod_Kword,Prod_Kword_Rank,Store,Store_Prod
+from amaz_redis.items import Product,Keyword,Prod_Kword_Rank,Store,Store_Prod
 import amaz_redis.settings as S
 
 class MySQLPipeline(object):

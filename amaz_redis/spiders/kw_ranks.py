@@ -32,7 +32,7 @@ class KwRanksSpider(RedisSpider):
         self.SQL_SELECT_KW="SELECT KEYWORD FROM KWORD WHERE ID=%s"
         self.SQL_SELECT_PKID_ASIN_COUNTRY='''
                                     SELECT pk.ID,p.ASIN,p.COUNTRY FROM PROD_KWORD AS pk LEFT JOIN PROD AS p ON pk.PROD_ID=p.ID
-                                    WHERE pk.KW_ID=%s
+                                    WHERE pk.KWORD_ID=%s
                                 '''
         self.CSS_LIS="li[id^=result]"
         self.CSS_SPONSOR="h5"
@@ -48,7 +48,7 @@ class KwRanksSpider(RedisSpider):
     def make_request_from_data(self,data):
         kid = int(data.decode())
         
-        self.CUR.execute(self.SQL_SELECT_PKID_ASIN_COUNTRY)
+        self.CUR.execute(self.SQL_SELECT_PKID_ASIN_COUNTRY,kid)
         rets=self.CUR.fetchall()
         
         if rets is None:
@@ -57,19 +57,19 @@ class KwRanksSpider(RedisSpider):
             prods=[]
             pkids={}
             for ret in rets:
-                pk_id,prod,country=rets
+                pk_id,prod,country=ret
                 prods.append(prod)
-                pkid[prod]=pk_id
+                pkids[prod]=pk_id
             
-            self.CUR.execute(self.SQL_SELECT_KW)
+            self.CUR.execute(self.SQL_SELECT_KW,kid)
             kword,=self.CUR.fetchone()
             words=kword.split()
             k='+'.join(words)
             
             url=self.URL_PROD_KWORD[country]%k
-            headers=self.Headers[country]
+            headers=self.HEADERS[country]
             meta={'prods':prods,'pkids':pkids}
-            yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=meta)
+            return scrapy.Request(url=url,callback=self.parse,headers=headers,meta=meta)
         
     def parse(self, response):
         asins_not_found=True
@@ -102,7 +102,8 @@ class KwRanksSpider(RedisSpider):
             
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
             url=response.urljoin(next_page)
-            yield scrapy.Request(url=url,callback=parse,headers=headers,meta=response.meta)
+            headers=response.request.headers
+            yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=response.meta)
         
     def _prod_url_parser(self,prod_url):
         ret=re.match(self.RE_PROD_URL,prod_url)
