@@ -11,6 +11,8 @@ from scrapy_redis.spiders import RedisSpider
 from amaz_redis.items import Prod_Kword_Rank
 import amaz_redis.settings as S
 
+from scrapy.shell import inspect_response
+
 class KwRanksSpider(RedisSpider):
     name = 'kw_ranks'
     redis_key='kw_ranks:start_kids'
@@ -21,8 +23,8 @@ class KwRanksSpider(RedisSpider):
             self.allowed_domains.append(i)
         super(KwRanksSpider,self).__init__(*args,**kwargs)
         
-        self.URL_PROD_KWORD={S.REGIONS['GB']:"https://www.amazon.com/s/ref=nb_sb_noss2?url=search-alias=aps&field-keywords=%s",
-                            S.REGIONS['JP']:"https://www.amazon.co.jp/s/ref=nb_sb_noss2?__mk_ja_JP=カタカナ&url=search-alias=aps&field-keywords=%s"}
+        self.URL_PROD_KWORD={S.REGIONS['GB']:"https://www.amazon.com/s/ref=nb_sb_noss?url=search-alias=aps&field-keywords=%s",
+                            S.REGIONS['JP']:"https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=カタカナ&url=search-alias=aps&field-keywords=%s"}
         self.HEADERS={S.REGIONS['JP']:{"Host":"www.amazon.co.jp",
                                        "Referer":"https://www.amazon.co.jp/"
                                         },
@@ -39,7 +41,7 @@ class KwRanksSpider(RedisSpider):
         self.CSS_SPONSOR="h5"
         self.CSS_PROD_ID="::attr('data-asin')"
         self.CSS_PROD_URL="a[class='a-link-normal a-text-normal']::attr(href)"
-        self.CSS_NEXT_PAGE="a[title='Next Page']::attr(href)"
+        self.CSS_NEXT_PAGE="a.pageNext::attr(href)"
         self.RE_PROD_URL=r"(.*)/ref=sr_1_([0-9]{1,})(.*)qid=([0-9]{1,})&sr(.*)"
         
         self.CONN=pymysql.connect(S.MYSQL_HOST,S.MYSQL_USER,S.MYSQL_PASSWORD,S.MYSQL_DB,charset=S.MYSQL_CHARSET)
@@ -48,7 +50,6 @@ class KwRanksSpider(RedisSpider):
     # 重写scrapy-redis中的函数
     def make_request_from_data(self,data):
         kid = int(data.decode())
-        print(kid)
         self.CUR.execute(self.SQL_SELECT_PKID_ASIN_COUNTRY,kid)
         rets=self.CUR.fetchall()
         
@@ -102,6 +103,8 @@ class KwRanksSpider(RedisSpider):
                     yield pkr_loader.load_item()
         
         asins_not_found=False if not response.meta['prods'] else True
+        
+        inspect_response(response,self)
         
         if asins_not_found:
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
