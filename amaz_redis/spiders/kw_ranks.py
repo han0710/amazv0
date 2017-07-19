@@ -48,7 +48,7 @@ class KwRanksSpider(RedisSpider):
     # 重写scrapy-redis中的函数
     def make_request_from_data(self,data):
         kid = int(data.decode())
-        
+        print(kid)
         self.CUR.execute(self.SQL_SELECT_PKID_ASIN_COUNTRY,kid)
         rets=self.CUR.fetchall()
         
@@ -105,9 +105,11 @@ class KwRanksSpider(RedisSpider):
         
         if asins_not_found:
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
+            print(next_page)
             url=response.urljoin(next_page)
+            print(url)
             headers=response.request.headers
-            print('new request:%s'%url)
+            #print('new request:%s'%url)
             yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=response.meta)
         
     def _prod_url_parser(self,prod_url):
