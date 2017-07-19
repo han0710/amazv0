@@ -105,11 +105,9 @@ class KwRanksSpider(RedisSpider):
         
         if asins_not_found:
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
-            print(next_page)
             url=response.urljoin(next_page)
-            print(url)
             headers=response.request.headers
-            #print('new request:%s'%url)
+            print('new request:%s'%url)
             yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=response.meta)
         
     def _prod_url_parser(self,prod_url):
