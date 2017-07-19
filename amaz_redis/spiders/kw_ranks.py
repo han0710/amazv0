@@ -4,6 +4,7 @@ import re
 import json
 import pymysql
 
+from scrapy.loader import ItemLoader
 from scrapy.exceptions import CloseSpider
 from scrapy_redis.spiders import RedisSpider
 
@@ -12,7 +13,7 @@ import amaz_redis.settings as S
 
 class KwRanksSpider(RedisSpider):
     name = 'kw_ranks'
-    redis_key='KwRanksSpider:start_kids'
+    redis_key='kw_ranks:start_kids'
     
     def __init__(self,*args,**kwargs):
         self.allowed_domains=[]
@@ -73,36 +74,40 @@ class KwRanksSpider(RedisSpider):
         
     def parse(self, response):
         asins_not_found=True
-        while asins_not_found:
-            lis=response.css(self.CSS_LIS)
-            for li in lis:
-                # 注意到sponsor产品的sponsor标签放在h5标签中，据此加以排除
-                sponsor=li.css(self.CSS_SPONSOR)
-                if not sponsor:
-                    prod_id=li.css(self.CSS_PROD_ID).extract_first()
-                    if prod_id in response.meta['prods']:
-                        response.meta['prods'].remove(prod_id)
-                        
-                        prod_url=li.css(self.CSS_PROD_URL).extract_first()
-                        rank,qid=self._prod_url_parser(prod_url)
-                        headers=response.request.headers
-                        res={}
-                        for k in headers.keys():
-                            res[k.decode()]=headers[k].decode()
-                        
-                        pkr_loader=ItemLoader(item=Prod_Kword_Rank())
-                        pkr_loader.add_value('pk_id',response.meta['pkids'][prod_Id])
-                        pkr_loader.add_value('pkr_rank',rank)
-                        pkr_loader.add_value('pkr_qid',qid)
-                        pkr_loader.add_value('pkr_url',prod_url)
-                        pkr_loader.add_value('pkr_headers',json.dumps(res))
-                        yield pkr_loader.load_item()
-            
-            asin_not_found=False if not response.meta['prods'] else True
-            
+        
+        lis=response.css(self.CSS_LIS)
+        #print(response.meta['prods'])
+        
+        for li in lis:
+            # 注意到sponsor产品的sponsor标签放在h5标签中，据此加以排除
+            sponsor=li.css(self.CSS_SPONSOR)
+            if not sponsor:
+                prod_id=li.css(self.CSS_PROD_ID).extract_first()
+                if prod_id in response.meta['prods']:
+                    print('####################')
+                    response.meta['prods'].remove(prod_id)
+                    prod_url=li.css(self.CSS_PROD_URL).extract_first()
+                    rank,qid=self._prod_url_parser(prod_url)
+                    headers=response.request.headers
+                    res={}
+                    for k in headers.keys():
+                        res[k.decode()]=headers[k].decode()
+                    
+                    pkr_loader=ItemLoader(item=Prod_Kword_Rank())
+                    pkr_loader.add_value('pk_id',response.meta['pkids'][prod_id])
+                    pkr_loader.add_value('pkr_rank',rank)
+                    pkr_loader.add_value('pkr_qid',qid)
+                    pkr_loader.add_value('pkr_url',prod_url)
+                    pkr_loader.add_value('pkr_headers',json.dumps(res))
+                    yield pkr_loader.load_item()
+        
+        asins_not_found=False if not response.meta['prods'] else True
+        
+        if asins_not_found:
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
             url=response.urljoin(next_page)
             headers=response.request.headers
+            print('new request:%s'%url)
             yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=response.meta)
         
     def _prod_url_parser(self,prod_url):
