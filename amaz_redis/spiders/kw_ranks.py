@@ -41,7 +41,7 @@ class KwRanksSpider(RedisSpider):
         self.CSS_SPONSOR="h5"
         self.CSS_PROD_ID="::attr('data-asin')"
         self.CSS_PROD_URL="a[class='a-link-normal a-text-normal']::attr(href)"
-        self.CSS_NEXT_PAGE="a.pageNext::attr(href)"
+        self.CSS_NEXT_PAGE="a.pagnNext::attr(href)"
         self.RE_PROD_URL=r"(.*)/ref=sr_1_([0-9]{1,})(.*)qid=([0-9]{1,})&sr(.*)"
         
         self.CONN=pymysql.connect(S.MYSQL_HOST,S.MYSQL_USER,S.MYSQL_PASSWORD,S.MYSQL_DB,charset=S.MYSQL_CHARSET)
