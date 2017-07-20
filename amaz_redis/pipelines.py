@@ -23,8 +23,12 @@ class MySQLPipeline(object):
         self.charset=S.MYSQL_CHARSET
     
         self.PKR_INSERT_PKR="INSERT IGNORE INTO PROD_KWORD_RANK (PK_ID,RANK,URL,QID,HEADERS) VALUES (%s,%s,%s,%s,%s);"
-        self.PK_UPDATE_PGNM="UPDATE PROD_KWORD SET PAGE=%s WHERE ID=%s;"
-    
+        self.P_INSERT_ASIN="INSERT IGNORE INTO PROD (ASIN) VALUES (%s);"
+        self.S_INSERT_NAME="INSERT IGNORE INTO STORE (NAME) VALUES (%s);"
+        self.SP_INSERT_ID="INSERT IGNORE INTO STORE_PROD (STORE_ID,PROD_ID) \
+							SELECT s.ID,p.ID FROM STORE AS s, PROD AS p \
+							WHERE s.NAME=%s AND p.ASIN=%s;"
+        
     def open_spider(self,spider):
         self.connection=pymysql.connect(self.host,self.user,self.password,self.db,charset=self.charset)
         self.cursor=self.connection.cursor()
@@ -43,6 +47,20 @@ class MySQLPipeline(object):
             self.cursor.execute(self.PKR_INSERT_PKR,(pkid,rank,url,qid,headers))
             self.connection.commit()
             print('产品-关键字-排名已存入')
+        elif isinstance(item,Store):
+            item=dict(item)
+            name=item['store_name'][0]
+            self.cursor.execute(self.S_INSERT_NAME,name)
+            self.connection.commit()
+            print('店铺已存入')
+        elif isinstance(item,Store_Prod):
+            item=dict(item)
+            store_name=item['store_name'][0]
+            prod_asin=item['prod_code'][0]
+            self.cursor.execute(self.P_INSERT_ASIN,prod_asin)
+            self.cursor.execute(self.SP_INSERT_ID,(store_name,prod_asin))
+            self.connection.commit()
+            print('产品及店铺-产品已存入')
         else:
             raise DropItem('%s'%item)
         return item

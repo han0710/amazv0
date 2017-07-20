@@ -5,8 +5,10 @@ import re
 
 from scrapy.loader import ItemLoader
 from scrapy_redis.spiders import RedisSpider
+from scrapy.shell import inspect_response
+
 import amaz_redis.settings as S
-from amaz_redis.items import Store,Product,Store_Prod
+from amaz_redis.items import Store,Store_Prod
 
 class AmazStoresSpider(RedisSpider):
     name = 'amaz_stores'
@@ -48,7 +50,8 @@ class AmazStoresSpider(RedisSpider):
         store_loader.add_value('store_name',name)
         yield store_loader.load_item()
         
-        page_num=response.css(self.PAGE_NUM).extract_first()
+        #inspect_response(response,self)
+        page_num=response.css(self.CSS_PAGE_NUM).extract_first()
         # 如果分页
         if page_num:
             for i in range(int(page_num)):
@@ -59,11 +62,7 @@ class AmazStoresSpider(RedisSpider):
         
     def page_parse(self,response):
         lis=response.css(self.CSS_LIS).extract()
-        for li in lis:
-            prod_loader=ItemLoader(item=Product())
-            prod_loader.add_value('prod_code',li)
-            yield prod_loader.load_item()
-            
+        for li in lis:            
             store_prod_loader=ItemLoader(item=Store_Prod())
             store_prod_loader.add_value('store_name',response.meta['name'])
             store_prod_loader.add_value('prod_code',li)
