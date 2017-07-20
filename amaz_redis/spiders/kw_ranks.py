@@ -104,7 +104,7 @@ class KwRanksSpider(RedisSpider):
         
         asins_not_found=False if not response.meta['prods'] else True
         
-        inspect_response(response,self)
+        #inspect_response(response,self)
         
         if asins_not_found:
             next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
