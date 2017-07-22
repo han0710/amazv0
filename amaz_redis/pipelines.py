@@ -23,11 +23,11 @@ class MySQLPipeline(object):
         self.charset=S.MYSQL_CHARSET
     
         self.PKR_INSERT_PKR="INSERT IGNORE INTO PROD_KWORD_RANK (PK_ID,RANK,URL,QID,HEADERS) VALUES (%s,%s,%s,%s,%s);"
-        self.P_INSERT_ASIN="INSERT IGNORE INTO PROD (ASIN) VALUES (%s);"
+        self.P_INSERT_ASIN_COUNTRY="INSERT IGNORE INTO PROD (ASIN,COUNTRY) VALUES (%s,%s);"
         self.S_INSERT_NAME="INSERT IGNORE INTO STORE (NAME) VALUES (%s);"
         self.SP_INSERT_ID="INSERT IGNORE INTO STORE_PROD (STORE_ID,PROD_ID) \
-							SELECT s.ID,p.ID FROM STORE AS s, PROD AS p \
-							WHERE s.NAME=%s AND p.ASIN=%s;"
+                            SELECT s.ID,p.ID FROM STORE AS s, PROD AS p \
+                            WHERE s.NAME=%s AND p.ASIN=%s;"
         
     def open_spider(self,spider):
         self.connection=pymysql.connect(self.host,self.user,self.password,self.db,charset=self.charset)
@@ -57,7 +57,8 @@ class MySQLPipeline(object):
             item=dict(item)
             store_name=item['store_name'][0]
             prod_asin=item['prod_code'][0]
-            self.cursor.execute(self.P_INSERT_ASIN,prod_asin)
+            country=item['country'][0]
+            self.cursor.execute(self.P_INSERT_ASIN_COUNTRY,(prod_asin,country))
             self.cursor.execute(self.SP_INSERT_ID,(store_name,prod_asin))
             self.connection.commit()
             print('产品及店铺-产品已存入')

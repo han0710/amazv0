@@ -32,6 +32,7 @@ class AmazStoresSpider(RedisSpider):
         self.CSS_LIS="li[id^='result']::attr(data-asin)"
         self.RE_COUNTRY=".*www\.(.*)/.*"
         self.RE_NAME="(.*) Storefront"
+        self.RE_MM=".*placeID=(.*)&me=.*chant=(.*)&.*"
         
         self.CONN=pymysql.connect(S.MYSQL_HOST,S.MYSQL_USER,S.MYSQL_PASSWORD,S.MYSQL_DB,charset=S.MYSQL_CHARSET)
         self.CUR=self.CONN.cursor()
@@ -40,13 +41,20 @@ class AmazStoresSpider(RedisSpider):
         url=data.decode()
         country=re.match(self.RE_COUNTRY,url).group(1)
         headers=self.HEADERS[country]
-        return scrapy.Request(url=url,callback=self.parse,headers=headers)
+        meta={'country':country}
+        return scrapy.Request(url=url,callback=self.parse,headers=headers,meta=meta)
         
     def parse(self, response):
         storefront=response.css(self.CSS_STOREFRONT).extract_first()
         name=re.match(self.RE_NAME,storefront).group(1)
         
+        rets=re.match(self.RE_MM,response.url)
+        market=rets.group(1)
+        merchant=rets.group(2)
+        
         store_loader=ItemLoader(item=Store())
+        store_loader.add_value('market',market)
+        store_loader.add_value('merchant',merchant)
         store_loader.add_value('store_name',name)
         yield store_loader.load_item()
         
@@ -56,7 +64,8 @@ class AmazStoresSpider(RedisSpider):
         if page_num:
             for i in range(int(page_num)):
                 url='%s&page=%s'%(response.url,i+1)
-                yield scrapy.Request(url=url,callback=self.page_parse,meta={'name':name})
+                response.meta['name']=name
+                yield scrapy.Request(url=url,callback=self.page_parse,meta=response.meta)
         else:
             return self.page_parse(response)
         
@@ -66,5 +75,6 @@ class AmazStoresSpider(RedisSpider):
             store_prod_loader=ItemLoader(item=Store_Prod())
             store_prod_loader.add_value('store_name',response.meta['name'])
             store_prod_loader.add_value('prod_code',li)
+            store_prod_loader.add_value('country',response.meta['country'])
             yield store_prod_loader.load_item()
         

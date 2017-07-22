@@ -13,15 +13,15 @@ import amaz_redis.settings as S
 
 from scrapy.shell import inspect_response
 
-class KwRanksSpider(RedisSpider):
-    name = 'kw_ranks'
-    redis_key='kw_ranks:start_kids'
+class KwRanks1Spider(RedisSpider):
+    name = 'kw_ranks_1'
+    redis_key='kw_ranks_1:start_kids'
     
     def __init__(self,*args,**kwargs):
         self.allowed_domains=[]
         for i in S.REGIONS.values():
             self.allowed_domains.append(i)
-        super(KwRanksSpider,self).__init__(*args,**kwargs)
+        super(KwRanks1Spider,self).__init__(*args,**kwargs)
         
         self.URL_PROD_KWORD={S.REGIONS['GB']:"https://www.amazon.com/s/ref=nb_sb_noss?url=search-alias=aps&field-keywords=%s",
                             S.REGIONS['JP']:"https://www.amazon.co.jp/s/ref=nb_sb_noss?__mk_ja_JP=カタカナ&url=search-alias=aps&field-keywords=%s"}
@@ -41,7 +41,7 @@ class KwRanksSpider(RedisSpider):
         self.CSS_SPONSOR="h5"
         self.CSS_PROD_ID="::attr('data-asin')"
         self.CSS_PROD_URL="a[class='a-link-normal a-text-normal']::attr(href)"
-        self.CSS_NEXT_PAGE="a.pagnNext::attr(href)"
+        self.CSS_PAGE_NUM="span.pagnDisabled::text"
         self.RE_PROD_URL=r"(.*)/ref=sr_1_([0-9]{1,})(.*)qid=([0-9]{1,})&sr(.*)"
         
         self.CONN=pymysql.connect(S.MYSQL_HOST,S.MYSQL_USER,S.MYSQL_PASSWORD,S.MYSQL_DB,charset=S.MYSQL_CHARSET)
@@ -71,14 +71,20 @@ class KwRanksSpider(RedisSpider):
             url=self.URL_PROD_KWORD[country]%k
             headers=self.HEADERS[country]
             meta={'prods':prods,'pkids':pkids}
+            return scrapy.Request(url=url,callback=self.parse_pagenum,headers=headers,meta=meta)
+     
+    def parse_pagenum(self,response):
+        inspect_response(response,self)
+        page_num=int(response.css(self.CSS_PAGE_NUM).extract_first())
+        
+        for i in range(page_num):
+            url='%s&page=%s'%(response.url,i+1)
+            headers=response.request.headers
+            meta=response.meta
             return scrapy.Request(url=url,callback=self.parse,headers=headers,meta=meta)
-        
+            
     def parse(self, response):
-        asins_not_found=True
-        
         lis=response.css(self.CSS_LIS)
-        #print(response.meta['prods'])
-        
         for li in lis:
             # 注意到sponsor产品的sponsor标签放在h5标签中，据此加以排除
             sponsor=li.css(self.CSS_SPONSOR)
@@ -100,17 +106,6 @@ class KwRanksSpider(RedisSpider):
                     pkr_loader.add_value('pkr_url',prod_url)
                     pkr_loader.add_value('pkr_headers',json.dumps(res))
                     yield pkr_loader.load_item()
-        
-        asins_not_found=False if not response.meta['prods'] else True
-        
-        #inspect_response(response,self)
-        
-        if asins_not_found:
-            next_page=response.css(self.CSS_NEXT_PAGE).extract_first()
-            url=response.urljoin(next_page)
-            headers=response.request.headers
-            print('new request:%s'%url)
-            yield scrapy.Request(url=url,callback=self.parse,headers=headers,meta=response.meta)
         
     def _prod_url_parser(self,prod_url):
         ret=re.match(self.RE_PROD_URL,prod_url)

@@ -34,7 +34,7 @@ BOT_NAME = 'amaz_redis'
 SPIDER_MODULES = ['amaz_redis.spiders']
 NEWSPIDER_MODULE = 'amaz_redis.spiders'
 
-LOG_LEVEL="DEBUG"
+LOG_LEVEL="ERROR"
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENTS = ['Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
 			'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.104 Safari/537.36 Core/1.53.3211.400 QQBrowser/9.6.11523.400',
@@ -65,9 +65,10 @@ COOKIES_ENABLED = False
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-   "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Encoding":"gzip, deflate, sdch, br",
-    "Accept-Language":"zh-CN,zh;q=0.8",
+    "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    #"Accept-Encoding":"gzip, deflate, sdch, br",#会导致乱码
+	"Accept-Encoding":"gzip,deflate",
+    "Accept-Language":"zh-CN,zh;q=0.8;en",
     "Connection":"keep-alive",
     "Upgrade-Insecure-Requests":1,
     "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36"
